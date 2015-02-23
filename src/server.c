@@ -113,7 +113,6 @@ static struct client *cl_create(struct server *srv, int sd)
 	}
 
 	memset(cl, 0, sizeof(struct client));
-
 	cl->srv = srv;
 	cl->sd = sd;
 

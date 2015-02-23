@@ -21,12 +21,16 @@ along with epoll-server. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <unistd.h>
 
+/* Application configuration */
 struct config
 {
 	int port;
 	int eventQueue;
 };
 
+/*
+ * Shows usage information.
+ */
 static void printUsage(void)
 {
 	puts("Options:");
@@ -35,6 +39,10 @@ static void printUsage(void)
 	puts(" -p n  Set port number.");
 }
 
+/*
+ * Parses command line arguments.
+ * Returns 0 on success, -1 on failure.
+ */
 static int parseArgs(int argc, char *argv[], struct config *cfg)
 {
 	int ch;
