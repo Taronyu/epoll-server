@@ -32,6 +32,8 @@ along with epoll-server. If not, see <http://www.gnu.org/licenses/>.
 /* Client instance */
 struct client
 {
+	/* Remote IP address */
+	char addr[INET_ADDRSTRLEN];
 	/* Server instance */
 	struct server *srv;
 	/* Socket */
@@ -63,7 +65,7 @@ static void cl_free(struct client *cl)
 		return;
 	}
 
-	/* Remove client from client list */
+	/* Remove client from the list */
 	if (cl != cl->next)
 	{
 		cl->next->prev = cl->prev;
@@ -99,11 +101,13 @@ static void cl_free(struct client *cl)
  * Creates a new client instance and adds it to the connected clients list.
  * Returns NULL on failure.
  */
-static struct client *cl_create(struct server *srv, int sd)
+static struct client *cl_create(struct server *srv, int sd,
+	const struct sockaddr *addr)
 {
 	struct client *cl;
 
 	assert(srv != NULL);
+	assert(addr != NULL);
 
 	cl = malloc(sizeof(struct client));
 	if (cl == NULL)
@@ -115,6 +119,17 @@ static struct client *cl_create(struct server *srv, int sd)
 	memset(cl, 0, sizeof(struct client));
 	cl->srv = srv;
 	cl->sd = sd;
+
+	/* Get remote IP */
+	if (addr->sa_family == AF_INET)
+	{
+		inet_ntop(AF_INET, &((struct sockaddr_in*)addr)->sin_addr,
+			cl->addr, INET_ADDRSTRLEN);
+	}
+	else
+	{
+		cl->addr[0] = '\0';
+	}
 
 	/* Add client to clients list */
 	if (srv->clients != NULL)
@@ -168,48 +183,48 @@ static void srv_onStop(struct server *srv)
 /*
  * Raises the client connect event.
  */
-static void srv_onConnect(struct server *srv)
+static void srv_onConnect(struct client *cl)
 {
 	const struct srv_handler *h;
 
-	assert(srv != NULL);
+	assert(cl != NULL);
 
-	h = srv->handler;
+	h = cl->srv->handler;
 	if (h != NULL && h->on_connect != NULL)
 	{
-		h->on_connect();
+		h->on_connect(cl->addr);
 	}
 }
 
 /*
  * Raises the client disconnect event.
  */
-static void srv_onDisconnect(struct server *srv)
+static void srv_onDisconnect(struct client *cl)
 {
 	const struct srv_handler *h;
 
-	assert(srv != NULL);
+	assert(cl != NULL);
 
-	h = srv->handler;
+	h = cl->srv->handler;
 	if (h != NULL && h->on_disconnect != NULL)
 	{
-		h->on_disconnect();
+		h->on_disconnect(cl->addr);
 	}
 }
 
 /*
  * Raises the client data receive event.
  */
-static void srv_onReceive(struct server *srv, const char *buf, ssize_t len)
+static void srv_onReceive(struct client *cl, const char *buf, ssize_t len)
 {
 	const struct srv_handler *h;
 
-	assert(srv != NULL);
+	assert(cl != NULL);
 
-	h = srv->handler;
+	h = cl->srv->handler;
 	if (h != NULL && h->on_receive != NULL)
 	{
-		h->on_receive(buf, len);
+		h->on_receive(cl->addr, buf, len);
 	}
 }
 
@@ -294,16 +309,13 @@ static void srv_freeAllClients(struct server *srv)
 static void srv_handleError(const struct epoll_event *ev)
 {
 	struct client *cl;
-	struct server *srv;
 
 	fprintf(stderr, "Connection lost or epoll error.\n");
 
 	cl = ev->data.ptr;
-	srv = cl->srv;
 
-	/* If the event should contain client data, the order must be reversed. */
+	srv_onDisconnect(cl);
 	cl_free(cl);
-	srv_onDisconnect(srv);
 }
 
 /*
@@ -332,7 +344,7 @@ static void srv_handleAccept(int efd, const struct epoll_event *ev)
 		goto on_error;
 	}
 
-	cl = cl_create(srv, sd);
+	cl = cl_create(srv, sd, &addr);
 	if (cl == NULL)
 	{
 		goto on_error;
@@ -348,7 +360,7 @@ static void srv_handleAccept(int efd, const struct epoll_event *ev)
 		goto on_error;
 	}
 
-	srv_onConnect(srv);
+	srv_onConnect(cl);
 	return;
 
 on_error:
@@ -394,16 +406,15 @@ static void srv_handleReceive(const struct epoll_event *ev)
 		}
 		else
 		{
-			srv_onReceive(cl->srv, buffer, len);
+			srv_onReceive(cl, buffer, len);
 		}
 	}
 
 	if (done != 0)
 	{
 		/* Remove client */
-		struct server *srv = cl->srv;
+		srv_onDisconnect(cl);
 		cl_free(cl);
-		srv_onDisconnect(srv);
 	}
 }
 

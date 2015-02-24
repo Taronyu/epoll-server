@@ -90,19 +90,19 @@ static void onStopHandler(void)
 	puts("Server stopped");
 }
 
-static void onConnectHandler(void)
+static void onConnectHandler(const char *ip)
 {
-	puts("Client connected");
+	printf("Client %s connected\n", ip);
 }
 
-static void onDisconnectHandler(void)
+static void onDisconnectHandler(const char *ip)
 {
-	puts("Client disconnected");
+	printf("Client %s disconnected\n", ip);
 }
 
-static void onReceiveHandler(const char *buffer, int len)
+static void onReceiveHandler(const char *ip, const char *buffer, int len)
 {
-	printf("Received %d bytes\n", len);
+	printf("Received %d bytes from %s\n", len, ip);
 }
 
 int main(int argc, char *argv[])

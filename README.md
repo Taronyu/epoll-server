@@ -1,5 +1,6 @@
 # epoll-server
-A sample (and simple) epoll TCP server implementation written in C.
+A sample (and simple) epoll TCP server implementation written in C. This is not
+intended to be an example of a production-ready high performance server.
 
 By the way, this is my first GitHub project so please have mercy.
 

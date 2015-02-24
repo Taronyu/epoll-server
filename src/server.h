@@ -25,9 +25,9 @@ struct srv_handler
 {
 	void (*on_start)(void);
 	void (*on_stop)(void);
-	void (*on_connect)(void);
-	void (*on_disconnect)(void);
-	void (*on_receive)(const char *buffer, int len);
+	void (*on_connect)(const char *ip);
+	void (*on_disconnect)(const char *ip);
+	void (*on_receive)(const char *ip, const char *buffer, int len);
 };
 
 /*
