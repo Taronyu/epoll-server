@@ -29,9 +29,13 @@ along with epoll-server. If not, see <http://www.gnu.org/licenses/>.
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 
+#define CLIENT_BUF_SIZE 2048
+
 /* Client instance */
 struct client
 {
+	/* Client buffer */
+	char buffer[CLIENT_BUF_SIZE];
 	/* Remote IP address */
 	char addr[INET_ADDRSTRLEN];
 	/* Server instance */
@@ -385,10 +389,9 @@ static void srv_handleReceive(const struct epoll_event *ev)
 	 */
 	while (1)
 	{
-		char buffer[2048];
 		ssize_t len;
 
-		len = read(cl->sd, buffer, 2048);
+		len = read(cl->sd, cl->buffer, CLIENT_BUF_SIZE);
 		if (len == -1)
 		{
 			if (errno != EAGAIN)
@@ -406,7 +409,7 @@ static void srv_handleReceive(const struct epoll_event *ev)
 		}
 		else
 		{
-			srv_onReceive(cl, buffer, len);
+			srv_onReceive(cl, cl->buffer, len);
 		}
 	}
 

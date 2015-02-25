@@ -102,7 +102,15 @@ static void onDisconnectHandler(const char *ip)
 
 static void onReceiveHandler(const char *ip, const char *buffer, int len)
 {
-	printf("Received %d bytes from %s\n", len, ip);
+	int i;
+	printf("Received %d bytes from %s:\n", len, ip);
+
+	for (i = 0; i < len - 1; ++i)
+	{
+		printf("0x%02X ", buffer[i]);
+	}
+
+	printf("0x%02X\n", buffer[len - 1]);
 }
 
 int main(int argc, char *argv[])
