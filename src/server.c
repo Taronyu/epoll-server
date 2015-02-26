@@ -60,7 +60,7 @@ struct server
 
 
 /*
- * Removes a client from the clients list and frees its resources.
+ * Remove a client from the clients list and free its resources.
  */
 static void cl_free(struct client *cl)
 {
@@ -102,7 +102,7 @@ static void cl_free(struct client *cl)
 }
 
 /*
- * Creates a new client instance and adds it to the connected clients list.
+ * Create a new client instance and add it to the connected clients list.
  * Returns NULL on failure.
  */
 static struct client *cl_create(struct server *srv, int sd,
@@ -153,7 +153,7 @@ static struct client *cl_create(struct server *srv, int sd,
 }
 
 /*
- * Raises the server start event.
+ * Raise the server start event.
  */
 static void srv_onStart(struct server *srv)
 {
@@ -169,10 +169,12 @@ static void srv_onStart(struct server *srv)
 }
 
 /*
- * Raises the server stop event.
+ * Raise the server stop event.
  */
 static void srv_onStop(struct server *srv)
 {
+	/* TODO Stop server logic still missing. */
+
 	const struct srv_handler *h;
 
 	assert(srv != NULL);
@@ -185,7 +187,7 @@ static void srv_onStop(struct server *srv)
 }
 
 /*
- * Raises the client connect event.
+ * Raise the client connect event.
  */
 static void srv_onConnect(struct client *cl)
 {
@@ -201,7 +203,7 @@ static void srv_onConnect(struct client *cl)
 }
 
 /*
- * Raises the client disconnect event.
+ * Raise the client disconnect event.
  */
 static void srv_onDisconnect(struct client *cl)
 {
@@ -217,7 +219,7 @@ static void srv_onDisconnect(struct client *cl)
 }
 
 /*
- * Raises the client data receive event.
+ * Raise the client data receive event.
  */
 static void srv_onReceive(struct client *cl, const char *buf, ssize_t len)
 {
@@ -233,8 +235,8 @@ static void srv_onReceive(struct client *cl, const char *buf, ssize_t len)
 }
 
 /*
- * Sets a socket descriptor to non-blocking IO.
- * Return 0 on success, -1 on failure.
+ * Set a socket descriptor to use non-blocking IO.
+ * Returns 0 on success, -1 on failure.
  */
 static int srv_setNonBlocking(int sd)
 {
@@ -260,7 +262,7 @@ on_error:
 }
 
 /*
- * Creates and binds a new TCP server socket on the given port.
+ * Create and bind a new TCP server socket on the given port.
  * Returns socket descriptor on success, -1 on failure.
  */
 static int srv_createAndBind(int port)
@@ -293,7 +295,7 @@ static int srv_createAndBind(int port)
 }
 
 /*
- * Removes all clients from the connected clients list.
+ * Remove all clients from the connected clients list.
  */
 static void srv_freeAllClients(struct server *srv)
 {
@@ -308,7 +310,7 @@ static void srv_freeAllClients(struct server *srv)
 }
 
 /*
- * Handles epoll error events.
+ * Handle epoll error events.
  */
 static void srv_handleError(const struct epoll_event *ev)
 {
@@ -323,7 +325,7 @@ static void srv_handleError(const struct epoll_event *ev)
 }
 
 /*
- * Handles accept events.
+ * Handle accept events.
  */
 static void srv_handleAccept(int efd, const struct epoll_event *ev)
 {
@@ -373,7 +375,7 @@ on_error:
 }
 
 /*
- * Handles data receive events.
+ * Handle data receive events.
  */
 static void srv_handleReceive(const struct epoll_event *ev)
 {
