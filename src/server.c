@@ -56,6 +56,8 @@ struct server
 	struct client *clients;
 	/* Server socket */
 	int sd;
+	/* Stop server flag */
+	volatile int shouldQuit;
 };
 
 
@@ -173,8 +175,6 @@ static void srv_onStart(struct server *srv)
  */
 static void srv_onStop(struct server *srv)
 {
-	/* TODO Stop server logic still missing. */
-
 	const struct srv_handler *h;
 
 	assert(srv != NULL);
@@ -306,9 +306,7 @@ static void srv_freeAllClients(struct server *srv)
 
 	while (srv->clients != NULL)
 	{
-		struct client *cl = srv->clients->next;
 		cl_free(srv->clients);
-		srv->clients = cl;
 	}
 }
 
@@ -461,13 +459,24 @@ static void srv_eventLoop(struct server *srv, int queueSize)
 		goto on_exit;
 	}
 
+	srv->shouldQuit = 0;
+
 	/* Event loop */
-	while (1)
+	while (srv->shouldQuit == 0)
 	{
 		int n, i;
 
 		/* Wait for epoll events */
 		n = epoll_wait(efd, events, queueSize, -1);
+
+		/* Alternative: check if interrupted */
+		/*
+		if (n == -1 && errno == EINTR)
+		{
+			break;
+		}
+		*/
+
 		/* Process events */
 		for (i = 0; i < n; ++i)
 		{
@@ -585,4 +594,21 @@ on_exit:
 	srv->sd = -1;
 
 	return rc;
+}
+
+void srv_stop(struct server *srv)
+{
+	if (srv != NULL)
+	{
+		/*
+		 * Note that this likely won't work if SA_RESTART is set when
+		 * registering the signal handler (epoll_wait won't return with -1
+		 * and set errno to EINTR then).
+		 */
+		srv->shouldQuit = 1;
+	}
+	else
+	{
+		fprintf(stderr, "Invalid server instance.\n");
+	}
 }

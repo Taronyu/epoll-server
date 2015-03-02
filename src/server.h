@@ -53,4 +53,9 @@ void srv_free(struct server *srv);
  */
 int srv_run(struct server *srv, int port, int queueSize);
 
+/*
+ * Stops the server.
+ */
+void srv_stop(struct server *srv);
+
 #endif

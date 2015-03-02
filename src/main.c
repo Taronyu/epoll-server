@@ -19,6 +19,8 @@ along with epoll-server. If not, see <http://www.gnu.org/licenses/>.
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <signal.h>
 #include <unistd.h>
 
 /* Application configuration */
@@ -27,6 +29,9 @@ struct config
 	int port;
 	int eventQueue;
 };
+
+/* Server instance */
+static struct server *g_srv = NULL;
 
 /*
  * Shows usage information.
@@ -113,14 +118,68 @@ static void onReceiveHandler(const char *ip, const char *buffer, int len)
 	printf("0x%02X\n", buffer[len - 1]);
 }
 
+/* Custom signal handler */
+static void onSignal(int s)
+{
+	switch (s)
+	{
+	case SIGINT:
+	case SIGTERM:
+		if (g_srv != NULL)
+		{
+			srv_stop(g_srv);
+		}
+		break;
+	}
+}
+
+/*
+ * Register new signal handler.
+ * Returns 0 on success, -1 on failure.
+ */
+static int registerSignalHandler(void)
+{
+	/*
+	 * TODO Maybe it would be safer to register the custom signal handler from
+	 * within the server. This way we could ensure it is registered properly.
+	 */
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = onSignal;
+	/* Don't use SA_RESTART here */
+	sa.sa_flags = 0;
+	sigfillset(&sa.sa_mask);
+
+	if (sigaction(SIGINT, &sa, NULL) != 0)
+	{
+		goto on_error;
+	}
+
+	if (sigaction(SIGTERM, &sa, NULL) != 0)
+	{
+		goto on_error;
+	}
+
+	return 0;
+
+on_error:
+	perror("sigaction");
+	return -1;
+}
+
 int main(int argc, char *argv[])
 {
 	struct config cfg;
 	struct srv_handler handler;
-	struct server *srv;
 	int rc;
 
 	if (parseArgs(argc, argv, &cfg) != 0)
+	{
+		return 1;
+	}
+
+	if (registerSignalHandler() != 0)
 	{
 		return 1;
 	}
@@ -134,14 +193,14 @@ int main(int argc, char *argv[])
 	handler.on_disconnect = onDisconnectHandler;
 	handler.on_receive = onReceiveHandler;
 
-	srv = srv_create(&handler);
-	if (srv == NULL)
+	g_srv = srv_create(&handler);
+	if (g_srv == NULL)
 	{
 		return -1;
 	}
 
-	rc = srv_run(srv, cfg.port, cfg.eventQueue);
-	srv_free(srv);
+	rc = srv_run(g_srv, cfg.port, cfg.eventQueue);
+	srv_free(g_srv);
 
 	return rc;
 }
