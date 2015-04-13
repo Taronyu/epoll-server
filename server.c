@@ -60,7 +60,6 @@ struct server
 	volatile int shouldQuit;
 };
 
-
 /*
  * Remove a client from the clients list and free its resources.
  */
