@@ -227,7 +227,10 @@ static void srv_onReceive(struct client *cl, const char *buf, ssize_t len)
 	assert(cl != NULL);
 
 	/* Echo data back to client */
-	write(cl->sd, buf, len);
+	if (write(cl->sd, buf, len) != len)
+	{
+		fprintf(stderr, "Failed to write response data.\n");
+	}
 
 	h = cl->srv->handler;
 	if (h != NULL && h->on_receive != NULL)
