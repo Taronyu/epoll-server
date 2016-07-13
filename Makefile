@@ -13,17 +13,17 @@ CFLAGS += -O2 -DNDEBUG
 endif
 
 BIN = build/epoll-server
-ALL_SRC = $(wildcard *.c)
-ALL_OBJ = $(ALL_SRC:%.c=build/%.o)
+SRC = $(wildcard src/*.c)
+OBJ = $(SRC:src/%.c=build/%.o)
 
 .PHONY: all clean
 
 all: $(BIN)
 
-$(BIN): $(ALL_OBJ)
+$(BIN): $(OBJ)
 	$(LD) -o $@ $^ $(LDFLAGS)
 
-build/%.o: %.c | build
+build/%.o: src/%.c | build
 	$(CC) $(CFLAGS) -o $@ $<
 
 build:

@@ -18,6 +18,7 @@ along with epoll-server. If not, see <http://www.gnu.org/licenses/>.
 #include "server.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -57,7 +58,7 @@ struct server
 	/* Server socket */
 	int sd;
 	/* Stop server flag */
-	volatile int shouldQuit;
+	volatile sig_atomic_t shouldQuit;
 };
 
 /*
